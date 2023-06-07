@@ -1,0 +1,1 @@
+cd srcJava && javac -cp ".:dependencies/gson-2.10.1.jar" *.java

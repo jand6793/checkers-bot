@@ -1,0 +1,5 @@
+*.pt
+*.pyc
+*.class
+q_table*
+__pycache__/
