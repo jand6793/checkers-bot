@@ -72,6 +72,7 @@ class CheckersBoard(QWidget):
 
     def build_board(self):
         for i in range(8):
+            i_inverse = 7 - i % 8
             for j in range(8):
                 if (i + j) % 2 == 0:
                     square = DroppableLabel()
@@ -83,12 +84,12 @@ class CheckersBoard(QWidget):
                 square.setPixmap(
                     pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 )
+                square.row = i_inverse
                 square.column = j
-                square.row = 7 - i % 8
                 square.setLayout(QVBoxLayout())  # Each square gets its own layout
                 self.grid_layout.addWidget(square, i, j)
 
-    def update_state(self, state):
+    def update_state(self, state: np.ndarray):
         for i in range(8):
             i_inverse = 7 - i % 8
             for j in range(8):
@@ -101,7 +102,7 @@ class CheckersBoard(QWidget):
                         child.widget().deleteLater()
 
                 piece = state[i_inverse, j]
-                if piece == 1 or piece == -1:
+                if piece in [1, -1]:
                     piece_label = DraggableLabel(i_inverse, j, True)
                     pixmap = QPixmap(
                         TAN_PIECE_PATH.as_posix()
@@ -125,8 +126,8 @@ class CheckersGame(QObject):
 
         self.window = QMainWindow()
         self.window.resize(800, 800)
-        self.board = CheckersBoard()
         self.window.setCentralWidget(self.board)
+        self.board = CheckersBoard()
         self.board.user_moved.connect(self.user_move)
 
         self.agent_turn()
