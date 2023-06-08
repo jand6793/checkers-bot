@@ -12,11 +12,13 @@ class QNetwork(nn.Module):
 
         # A simple network with one hidden layer
         self.fc1 = nn.Linear(state_size, 64)
-        self.fc2 = nn.Linear(64, action_size)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, action_size)
 
     def forward(self, state):
         x = torch.relu(self.fc1(state))
-        return self.fc2(x)
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
 
 
 class DeepQAgent:
