@@ -9,6 +9,7 @@ class CheckersModel:
         self._board = np.zeros((8, 8), dtype=int)
         self.reset()
         self._valid_moves = self._calc_valid_moves()
+        self._state = self._calc_state()
         self._current_player = 1
         self.num_p1_pieces = 12
         self.num_p2_pieces = 12
@@ -104,6 +105,7 @@ class CheckersModel:
         self._current_player = -self._current_player
 
         self._valid_moves = self._calc_valid_moves()
+        self._state = self._calc_state()
 
     def _is_jump(self, move: tuple[tuple[int, int], tuple[int, int]]):
         return abs(move[0][0] - move[1][0]) == 2
@@ -128,10 +130,11 @@ class CheckersModel:
         self._board[5:8:2, ::2] = -1
         self._board[6, 1::2] = -1
         self._current_player = 1
+        self._state = self._calc_state()
         self.num_p1_pieces = 12
         self.num_p2_pieces = 12
 
-    def get_state(self):
+    def _calc_state(self):
         flattened_board = self._board.flatten()
         return [
             flattened_board[i * 8 + j]
@@ -139,9 +142,15 @@ class CheckersModel:
             for j in range((i + 1) % 2, 8, 2)
         ]
 
+    def get_state(self):
+        return self._state
+    
+    def get_expanded_state(self):
+        return self._board
+
     def get_valid_moves(self):
         return self._valid_moves
-    
+
     def get_current_player(self):
         return self._current_player
 

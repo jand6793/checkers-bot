@@ -1,4 +1,4 @@
-from model import CheckersModel
+from ai.model import CheckersModel
 
 
 class CheckersEnv:

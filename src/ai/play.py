@@ -26,7 +26,6 @@ def play(agent: DeepQAgent, env: CheckersEnv):
             print("Invalid action!")
         next_state, reward, done, next_valid_actions = env.step(user_action)
         state, valid_actions = next_state, next_valid_actions
-        
 
     if reward == 1:
         print("Agent won!")
@@ -34,8 +33,9 @@ def play(agent: DeepQAgent, env: CheckersEnv):
         print("Agent lost!")
     else:
         print("Draw!")
-        
+
+
 env = CheckersEnv()
 agent = DeepQAgent(32, 4096)
-agent.load(Path() / "checkers_agent_weights.pt")
+agent.load(Path.cwd() / "agent_weights_1000.pt")
 play(agent, env)
