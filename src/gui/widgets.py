@@ -118,17 +118,17 @@ class CheckersGame(QObject):
         super().__init__()
 
         self.agent = DeepQAgent(32, 4096)
-        self.agent.load(Path.cwd() / "agent_weights_1000.pt")
+        self.agent.load(Path.cwd() / "agent_weights_1000_v2.pt")
 
         self.env = CheckersEnv()
         self.state = self.env.reset()
         self.valid_actions = self.env.get_valid_actions()
 
+        self.board = CheckersBoard()
+        self.board.user_moved.connect(self.user_move)
         self.window = QMainWindow()
         self.window.resize(800, 800)
         self.window.setCentralWidget(self.board)
-        self.board = CheckersBoard()
-        self.board.user_moved.connect(self.user_move)
 
         self.agent_turn()
 
