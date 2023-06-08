@@ -1,3 +1,4 @@
+import itertools
 from ai.model import CheckersModel
 
 
@@ -5,6 +6,8 @@ class CheckersEnv:
     def __init__(self):
         super().__init__()
         self.model = CheckersModel()
+        self._move_to_action = self._create_move_to_action()
+        self._action_to_move = self._create_action_to_move()
 
     def step(self, action: int):
         move = self.action_to_move(action)
@@ -47,13 +50,35 @@ class CheckersEnv:
             return -1
 
     def move_to_action(self, move: tuple[tuple[int, int], tuple[int, int]]):
-        (start_x, start_y), (end_x, end_y) = move
-        start = start_y * 8 + start_x
-        end = end_y * 8 + end_x
-        return start * 64 + end
+        return self._move_to_action[move]
 
     def action_to_move(self, action: int):
-        start, end = divmod(action, 64)
-        start_y, start_x = divmod(start, 8)
-        end_y, end_x = divmod(end, 8)
-        return (start_x, start_y), (end_x, end_y)
+        return self._action_to_move[action]
+
+    def _create_move_to_action(self):
+        action_mapping: dict[tuple[tuple[int, int], tuple[int, int]], int] = {}
+        action_index = 0
+        # change these depending on your coordinate systems
+        dydx = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+
+        # For each square on the board
+        for i, j in itertools.product(range(8), range(8)):
+            if (i + j) % 2 == 1:  # Check if the square is dark
+                # For each possible action from this square
+                for dx, dy in dydx:
+                    new_i = i + dx
+                    new_j = j + dy
+
+                    # Check if the new square is valid and dark
+                    if 0 <= new_i < 8 and 0 <= new_j < 8 and (new_i + new_j) % 2 == 1:
+                        # If the action is valid, add it to the mapping
+                        action_mapping[((i, j), (new_i, new_j))] = action_index
+                        action_index += 1
+
+        return action_mapping
+
+    def _create_action_to_move(self):
+        return {v: k for k, v in self._move_to_action.items()}
+    
+    def get_action_space(self):
+        return len(self._move_to_action)
