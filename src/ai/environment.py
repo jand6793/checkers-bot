@@ -1,4 +1,5 @@
 import itertools
+
 from ai.model import CheckersModel
 
 
@@ -23,8 +24,7 @@ class CheckersEnv:
                 reward = 0
         else:
             reward = -0.01
-
-        reward = 1 if done else 0
+            
         state = self.model.get_state()
         valid_actions = self.get_valid_actions()
         return state, reward, done, valid_actions
@@ -59,7 +59,7 @@ class CheckersEnv:
         action_mapping: dict[tuple[tuple[int, int], tuple[int, int]], int] = {}
         action_index = 0
         # change these depending on your coordinate systems
-        dydx = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+        dydx = [(-1, -1), (1, -1), (-1, 1), (1, 1), (-2, -2), (2, -2), (-2, 2), (2, 2)]
 
         # For each square on the board
         for i, j in itertools.product(range(8), range(8)):
@@ -79,6 +79,6 @@ class CheckersEnv:
 
     def _create_action_to_move(self):
         return {v: k for k, v in self._move_to_action.items()}
-    
+
     def get_action_space(self):
         return len(self._move_to_action)

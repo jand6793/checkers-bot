@@ -51,12 +51,10 @@ class DeepQAgent:
         q_values = q_values.cpu().numpy()
 
         # Mask invalid actions
-        # masked_q_values = np.full(self.action_size, -np.inf)
-        # masked_q_values[valid_actions] = q_values[valid_actions]
-        valid_q_values = q_values[valid_actions]
+        masked_q_values = np.full(self.action_size, -np.inf)
+        masked_q_values[valid_actions] = q_values[valid_actions]
 
-        # return np.argmax(masked_q_values)
-        return np.argmax(valid_q_values)
+        return np.argmax(masked_q_values)
 
     def learn(self, state, action, reward, next_state, done: bool):
         state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device)

@@ -18,19 +18,21 @@ def self_play_train(agent: DeepQAgent, env: CheckersEnv, episodes: int):
         done = False
 
         count = 0
-        while not done and count < 200:
+        while not done:# and count < 200:
             count += 1
             action = agent.act(state, valid_actions)
             next_state, reward, done, next_valid_actions = env.step(action)
             agent.learn(state, action, reward, next_state, done)
             state, valid_actions = next_state, next_valid_actions
 
-        if reward == 1:
-            win_count += 1
-        elif reward == -1:
-            loss_count += 1
-        else:
-            draw_count += 1
+        if done:
+            winner = env.model.check_winner()
+            if winner == 1:
+                win_count += 1
+            elif winner == -1:
+                loss_count += 1
+            else:
+                draw_count += 1
 
         if (episode + 1) % 100 == 0:
             print(
@@ -40,7 +42,7 @@ def self_play_train(agent: DeepQAgent, env: CheckersEnv, episodes: int):
 
 # Set parameters
 state_size = 32  # The number of squares in the checkers board
-action_size = 98  # The total number of actions in the checkers game (each square can be a starting and ending point for a move)
+action_size = 170  # The total number of actions in the checkers game (each square can be a starting and ending point for a move)
 episodes = 1_000  # The number of episodes to train for
 
 # Create environment and agent
