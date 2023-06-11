@@ -7,12 +7,12 @@ import numpy as np
 class CheckersModel:
     def __init__(self):
         self._board = np.zeros((8, 8), dtype=int)
+        self._state: list[int] = []
+        self._valid_moves: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        self._current_player = 0
+        self.num_p1_pieces = 0
+        self.num_p2_pieces = 0
         self.reset()
-        self._valid_moves = self._calc_valid_moves()
-        self._state = self._calc_state()
-        self._current_player = 1
-        self.num_p1_pieces = 12
-        self.num_p2_pieces = 12
 
     # Check if the given position is within the board boundaries
     def _in_bounds(self, x: int, y: int):
@@ -95,7 +95,7 @@ class CheckersModel:
         ):
             self._board[end_y, end_x] *= 2
 
-        if self._is_jump(move):
+        if self.is_jump(move):
             if self._current_player == 1:
                 self.num_p2_pieces -= 1
             else:
@@ -107,7 +107,7 @@ class CheckersModel:
         self._valid_moves = self._calc_valid_moves()
         self._state = self._calc_state()
 
-    def _is_jump(self, move: tuple[tuple[int, int], tuple[int, int]]):
+    def is_jump(self, move: tuple[tuple[int, int], tuple[int, int]]):
         return abs(move[0][0] - move[1][0]) == 2
 
     # Check if there's a winner (no more pieces for one player)
@@ -133,6 +133,7 @@ class CheckersModel:
         self._state = self._calc_state()
         self.num_p1_pieces = 12
         self.num_p2_pieces = 12
+        self._valid_moves = self._calc_valid_moves()
 
     def _calc_state(self):
         flattened_board = self._board.flatten()
@@ -144,7 +145,7 @@ class CheckersModel:
 
     def get_state(self):
         return self._state
-    
+
     def get_expanded_state(self):
         return self._board
 

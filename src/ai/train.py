@@ -8,9 +8,9 @@ from environment import CheckersEnv
 
 
 def self_play_train(agent: DeepQAgent, env: CheckersEnv, episodes: int):
-    win_count = 0
-    loss_count = 0
-    draw_count = 0
+    p1_wins = 0
+    p2_wins = 0
+    draws = 0
 
     for episode in range(episodes):
         state = env.reset()
@@ -18,25 +18,30 @@ def self_play_train(agent: DeepQAgent, env: CheckersEnv, episodes: int):
         done = False
 
         count = 0
-        while not done:# and count < 200:
+        while not done and count < 200:
             count += 1
             action = agent.act(state, valid_actions)
             next_state, reward, done, next_valid_actions = env.step(action)
+            if done and env.model.check_winner() != 0:
+                agent.learn(
+                    env.get_prev_state(), env.get_prev_action(), -10, next_state, done
+                )
+
             agent.learn(state, action, reward, next_state, done)
             state, valid_actions = next_state, next_valid_actions
 
         if done:
             winner = env.model.check_winner()
             if winner == 1:
-                win_count += 1
+                p1_wins += 1
             elif winner == -1:
-                loss_count += 1
+                p2_wins += 1
             else:
-                draw_count += 1
+                draws += 1
 
         if (episode + 1) % 100 == 0:
             print(
-                f"Episode {episode+1}/{episodes} finished. Wins: {win_count}, Losses: {loss_count}, Draws: {draw_count}"
+                f"Episode {episode+1}/{episodes} finished. P1 Wins: {p1_wins}, P2 Wins: {p2_wins}, Draws: {draws}"
             )
 
 
