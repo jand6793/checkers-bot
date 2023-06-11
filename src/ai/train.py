@@ -48,7 +48,7 @@ def self_play_train(agent: DeepQAgent, env: CheckersEnv, episodes: int):
 # Set parameters
 state_size = 32  # The number of squares in the checkers board
 action_size = 170  # The total number of actions in the checkers game (each square can be a starting and ending point for a move)
-episodes = 1_000  # The number of episodes to train for
+episodes = 100_000  # The number of episodes to train for
 
 # Create environment and agent
 env = CheckersEnv()
@@ -56,7 +56,9 @@ agent = DeepQAgent(state_size, action_size)
 
 # Train the agent
 self_play_train(agent, env, episodes)
-agent.save(Path() / f"agent_weights_{episodes}_v2.pt")
+weights_path = Path() / f"weights_{episodes}ep_{agent.epsilon_decay}epsilDec_{agent.gamma}gamma_{agent.network.num_layers}layers.pt"
+print(f'Training finished. Saving agent weights "{weights_path.name}"')
+agent.save(weights_path)
 
 
 None

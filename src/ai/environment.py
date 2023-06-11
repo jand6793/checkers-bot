@@ -26,7 +26,7 @@ class CheckersEnv:
         
         done = self.model.is_ended()
         winner = self.model.check_winner()
-        reward = 10 if winner else -0.01
+        reward = 10 if winner else -0.01 # Could change to-0.01 if the predicted q values weren't so infintesimally small
         state = self.model.get_state()
         valid_actions = self.get_valid_actions()
         return state, reward, done, valid_actions

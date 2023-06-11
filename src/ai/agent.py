@@ -10,15 +10,21 @@ class QNetwork(nn.Module):
     def __init__(self, state_size: int, action_size: int):
         super().__init__()
 
-        # A simple network with one hidden layer
-        self.fc1 = nn.Linear(state_size, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, action_size)
+        self.layers = [
+            nn.Linear(state_size, 64),
+            nn.Linear(64, 64),
+            nn.Linear(64, 64),
+            nn.Linear(64, 64),
+            nn.Linear(64, action_size),
+        ]
+        self.num_layers = len(self.layers)
+        for i, layer in enumerate(self.layers):
+            self.add_module(f"layer{i}", layer)
 
     def forward(self, state):
-        x = torch.relu(self.fc1(state))
-        x = torch.relu(self.fc2(x))
-        return self.fc3(x)
+        for layer in self.layers[:-1]:
+            state = torch.relu(layer(state))
+        return self.layers[-1](state)
 
 
 class DeepQAgent:
@@ -26,7 +32,7 @@ class DeepQAgent:
         self,
         state_size: int,
         action_size: int,
-        gamma: float = 0.95,
+        gamma: float = 0.618,#0.95,
         learning_rate: float = 0.01,
         update_every: int = 100,
     ):
@@ -35,7 +41,7 @@ class DeepQAgent:
         self.action_size = action_size
         self.gamma = gamma
         self.epsilon = 1.0
-        self.epsilon_decay = 0.999
+        self.epsilon_decay = 0.99999
         self.epsilon_min = 0.01
         self.update_every = update_every
         self.t_step = 0
@@ -46,7 +52,7 @@ class DeepQAgent:
         self.target_network.eval()
 
         self.optimizer = optim.Adam(self.network.parameters(), lr=learning_rate)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.HuberLoss()
         self.action_size = action_size
 
     def act(self, state: np.ndarray, valid_actions: list[int]):
@@ -78,7 +84,7 @@ class DeepQAgent:
                 next_q_values = self.target_network(next_state_tensor)
             target_value = reward_tensor + self.gamma * torch.max(next_q_values)
 
-        predicted_value = self.network(state_tensor)[action] # Figure out why action is ever None. Has something to do with the environment prev and temp actions I think
+        predicted_value = self.network(state_tensor)[action]
 
         loss = self.criterion(predicted_value, target_value)
 
