@@ -1,10 +1,8 @@
-from typing import Union
-
 import numpy as np
 
 
-# Game board representation and utility functions
 class CheckersModel:
+    """This class represents the game board and the rules of the game of checkers."""
     def __init__(self):
         self._board = np.zeros((8, 8), dtype=int)
         self._state: list[int] = []
@@ -20,12 +18,13 @@ class CheckersModel:
 
     # Recursively find all possible jumps for the give_n position
     def _find_jumps(
-        self, x: int, y: int, visited: Union[set[tuple[int, int]], None] = None
+        self, x: int, y: int, visited: set[tuple[int, int]] | None = None
     ):
         visited = visited or set()
         visited.add((x, y))
 
         jumps: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        # For each adjacent square in each direction check for a valid jump
         for dx, dy in self._get_directions(self._board[y, x]):
             new_x, new_y = x + dx, y + dy
             jump_x, jump_y = new_x + dx, new_y + dy
@@ -95,18 +94,21 @@ class CheckersModel:
         ):
             self._board[end_y, end_x] *= 2
 
+        # Decrement either player's piece count if a piece was captured
         if self.is_jump(move):
             if self._current_player == 1:
                 self.num_p2_pieces -= 1
             else:
                 self.num_p1_pieces -= 1
 
-        # Switch to the other player
-        self._current_player = -self._current_player
-
+        # Update the current player and valid moves
         self._valid_moves = self._calc_valid_moves()
+        if self._valid_moves and not self.is_jump(self._valid_moves[0]):
+            self._current_player = -self._current_player
+        
         self._state = self._calc_state()
 
+    # Check if a move is a jump
     def is_jump(self, move: tuple[tuple[int, int], tuple[int, int]]):
         return abs(move[0][0] - move[1][0]) == 2
 
@@ -119,6 +121,7 @@ class CheckersModel:
         else:
             return 0
 
+    # Check if the game is over
     def is_ended(self):
         return bool(self.check_winner()) or not self._calc_valid_moves()
 
@@ -135,6 +138,7 @@ class CheckersModel:
         self.num_p2_pieces = 12
         self._valid_moves = self._calc_valid_moves()
 
+    # Create a flattened representation of the board
     def _calc_state(self):
         flattened_board = self._board.flatten()
         return [

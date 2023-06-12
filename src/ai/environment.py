@@ -1,65 +1,79 @@
 import itertools
-import sys
-from pathlib import Path
-
-sys.path.append((Path.cwd() / "src").as_posix())
+from collections import deque
+from dataclasses import dataclass
 
 from ai.model import CheckersModel
 
 
+@dataclass
+class ReplayItem:
+    player: int
+    state: list[int]
+    action: int
+    is_jump: bool
+
+
 class CheckersEnv:
+    """A wrapper for the CheckersModel that provides a gym-like interface."""
     def __init__(self):
         self.model = CheckersModel()
         self._move_to_action = self._create_move_to_action()
         self._action_to_move = self._create_action_to_move()
-        self._prev_state: list[int] = []
-        self._prev_action: int = 0
-        self._temp_action: int = 0
+        self.replay: deque[ReplayItem] = deque()
         self.reset()
 
+    # Apply the given action to the model and return the new state,
+    # reward, done, and valid actions
     def step(self, action: int):
-        self._prev_state = self.model.get_state()
-        self._prev_action = self._temp_action
-        self._temp_action = action
         move = self.action_to_move(action)
+        current_player = self.model.get_current_player()
+        pre_state = self.model.get_state()
         self.model.apply_move(move)
-        
-        done = self.model.is_ended()
-        winner = self.model.check_winner()
-        reward = 10 if winner else -0.01 # Could change to-0.01 if the predicted q values weren't so infintesimally small
-        state = self.model.get_state()
-        valid_actions = self.get_valid_actions()
-        return state, reward, done, valid_actions
 
+        winner = self.model.check_winner()
+        # Reward of 10 for winning moves, 1 for jumps, 0 or -0.01 for regular moves
+        if winner:
+            reward = 10
+        elif self.model.is_jump(move):
+            reward = 1
+        else:
+            reward = 0
+            # reward = -0.01
+        post_state = self.model.get_state()
+        valid_actions = self.get_valid_actions()
+
+        # Add the current move to the replay buffer
+        item = ReplayItem(current_player, pre_state, action, self.model.is_jump(move))
+        self.replay.appendleft(item)
+        done = self.model.is_ended()
+        return post_state, reward, done, valid_actions
+
+    # Return the valid actions for the current player
     def get_valid_actions(self):
         valid_moves = self.model.get_valid_moves()
         return [self.move_to_action(move) for move in valid_moves]
 
+    # Reset the model and replay buffer
     def reset(self):
         self.model.reset()
-        self._prev_state = []
-        self._prev_action = 0
-        self._temp_action = 0
+        self.replay.clear()
+        self.replay.appendleft(ReplayItem(0, self.model.get_state(), -1, False))
         return self.model.get_state()
 
+    # Render the board state
     def render(self, mode="human"):
         print(self.model._board)  # This could be fancier, but for debugging it's okay.
 
-    def get_reward(self):
-        winner = self.model.check_winner()
-        if not winner:
-            return 0
-        elif winner == 1:
-            return 1
-        else:
-            return -1
-
+    # Convert a move to an action
+    # An action is an integer mapping to a move
     def move_to_action(self, move: tuple[tuple[int, int], tuple[int, int]]):
         return self._move_to_action[move]
 
+    # Convert an action to a move
     def action_to_move(self, action: int):
         return self._action_to_move[action]
 
+    # Create a mapping from moves to actions
     def _create_move_to_action(self):
         action_mapping: dict[tuple[tuple[int, int], tuple[int, int]], int] = {}
         action_index = 0
@@ -82,20 +96,29 @@ class CheckersEnv:
 
         return action_mapping
 
+    # Create a mapping from actions to moves
     def _create_action_to_move(self):
         return {v: k for k, v in self._move_to_action.items()}
 
+    # Return the number of actions
     def get_action_space(self):
         return len(self._move_to_action)
-
+    
+    # Check if the given action is a jump
     def action_is_jump(self, action: int):
         return self.model.is_jump(self.action_to_move(action))
 
-    def get_prev_state(self):
-        return self._prev_state
-
-    def get_prev_action(self):
-        return self._prev_action
+    # Get the index of the last move made by the opponent (opposite of the current player)
+    def get_opp_last_item_index(self):
+        opponent_player = -self.model.get_current_player()
+        return next(
+            (
+                index
+                for index, item in enumerate(self.replay)
+                if item.player == opponent_player
+            ),
+            None,
+        )
 
 
 if __name__ == "__main__":
